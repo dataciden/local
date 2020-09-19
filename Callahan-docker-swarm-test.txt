@@ -1,0 +1,24 @@
+- We are working on the worker for now. 
+- since we will connect to the master from the worker, we only need to do these on the worker. 
+sudo yum install python-pip
+pip install ec2instanceconnectcli
+sudo pip install ec2instanceconnectcli
+- get the master ID from the AWS console. copy it and connect to it via below command.
+- master ID is: i-0cf5767bc570abc08
+- worker ID is: i-0a0675a7c4747a47b
+mssh -r us-east-1 i-0cf5767bc570abc08
+- now we need to initialize docker swarm on the master. below code does that.
+docker swarm init
+- we then need to add a worker to the docker swarm. in order to do that, we need to run below command to get the join code
+docker swarm join-token worker | grep docker
+- we get something like this: docker swarm join --token SWMTKN-1-5tz2qw9ap2v4yl5c6kidiu58u3e7d2lam54hvnhyf334tlviiv-2z3lzr7wpgr3ztwwypikov6o8 172.31.95.39:2377
+- we can do all this from the worker via below command:
+mssh -r us-east-1 <instance-id> docker swarm join-token worker | grep docker
+- keep in mind, the $() will allow whatever is inside the paranthesis to run as a command
+- this means, if we run below command on the worker, it should connect to the master, in one line
+$(mssh -r us-east-1 <instance-id> docker swarm join-token worker | grep docker)
+-- 
+we spent a good amount of our session creating this line: $(mssh -r us-east-1 <instance-id> docker swarm join-token worker | grep docker) 
+Thank you Callahan for explaining the details of why we use this line and how we got there. I feel like I have gained a lot of knowledge today, just from this line :slightly_smiling_face: 
+--
+from here on, we add this line into the Cloudformation template, and then have CloudFormation do all the work 
